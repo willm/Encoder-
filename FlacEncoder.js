@@ -38,58 +38,40 @@ FlacEncoder.prototype.encode = function(filepath){
 	}
 };
 
-FlacEncoder.prototype.decodeFlac = function(filename, cb){
-		var command = 'ffmpeg -y -i ' +
-						filename + ' ' +
-						filename.replaceExtension('.wav');
-						
-		exec(command, {cwd:this.inDir},
-			function (error, stout, sterr) {
+FlacEncoder.prototype.executeCommand = function (command, err,cb) {
+  exec(command, {cwd:this.inDir},function (error, stout, sterr) {
+  			  console.log(command);
 			  console.log('stout: ' + stout);
 			  console.log('sterr: ' + sterr);
 			  if(error !== null){
 				  throw{
-					name:'FlacDecodeError',
-					message:error
-				};
+				  	name:err,
+				  	message: error
+				  	};
 			  }
 			  cb();
-			});
+			})
+};
+
+FlacEncoder.prototype.decodeFlac = function(filename, cb){
+		var command = 'ffmpeg -y -i ' +
+						filename + ' ' +
+						filename.replaceExtension('.wav');
+		console.log(command + ' : ' + this.inDir);
+		this.executeCommand(command, 'FlacDecodeError', cb);
 };
 
 FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 		var command = 'lame -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
 			this.outDir + inputFile.replaceExtension('_'+bitrate+'.mp3');
-		exec(command, {cwd:this.inDir},
-			function (error, stout, sterr) {
-			  console.log('stout: ' + stout);
-			  console.log('sterr: ' + sterr);
-			  if (error !== null) {
-			    throw{
-			    	name:'LameError',
-			    	message:error
-			    };
-			  }
-			cb();
-			});
+		this.executeCommand(command, 'Mp3EncodeError', cb);
 };
 
 FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
 		var command = 'ffmpeg -ss 0 -t 30 -i ' + this.outDir + inputFile + ' -acodec copy ' + 
 			this.outDir + inputFile.replaceExtension('_mp3clip.mp3');
-		exec(command, {cwd:this.inDir},
-			function (error, stout, sterr) {
-			  console.log('stout: ' + stout);
-			  console.log('sterr: ' + sterr);
-			  if (error !== null) {
-			    throw{
-			    	name:'FFMpegError',
-			    	message:error
-			    };
-			  }
-			cb();
-			});
+		this.executeCommand(command, 'ClippingError', cb);
 };
 
 FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
@@ -98,22 +80,8 @@ FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
 			command = 'wine ../../lib/win32/neroAacEnc.exe -br ' + bitrate + ' ' +
 				'-if ' + inputFile + ' ' + 
 				'-of ' + this.outDir + inputFile.replaceExtension('.m4a');
-			
-		exec(command, {cwd:this.inDir},
-			function (error, stout, sterr) {
-			  console.log('stout: ' + stout);
-			  console.log('sterr: ' + sterr);
-			  if (error !== null) {
-			    throw{
-			    	name:'NeroError',
-			    	message:error
-			    };
-			  }
-			cb();
-			});
+		this.executeCommand(command, 'M4AEncodeError', cb);
 };
-
-
 
 var e = new FlacEncoder(path.join(__dirname,'spec','res'));
 e.encode('test.flac');
