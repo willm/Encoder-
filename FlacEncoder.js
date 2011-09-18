@@ -11,6 +11,7 @@ function FlacEncoder(inputDirectiory) {
 
 FlacEncoder.prototype.encode = function(filepath){
 	var that = this;
+	fs.mkdir(that.outDir,0777);
 	if(filepath.endsWith('.flac')){
 		step(
 				function () {
