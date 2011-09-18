@@ -22,10 +22,12 @@ FlacEncoder.prototype.encode = function(filepath){
 				  that.convertToM4A('test.wav', 320,this);
 				},
 				function () {
+				//remove uneccessary wav file
 				  exec('rm test.wav', {cwd:that.inDir});
 				  that.clipMp3('test_64.mp3',this);
 				},
 				function () {
+				//remove full length 64kbps file
 				  exec('rm '+that.outDir +'test_64.mp3', {cwd:that.inDir}, this);
 				}
 			);

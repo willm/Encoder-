@@ -2,6 +2,7 @@ var express = require('express'),
 	path = require('path'),
 	nowjs = require('now'),
 	browserify = require('browserify'),
+	fs = require('fs'),
 	server;
 
 server = express.createServer();
@@ -21,6 +22,12 @@ server.configure(function configureAppAndMiddleware() {
 
 server.get('/', function showHomePage(req, res) {
 	res.render('index.jade');
+});
+
+server.post('/encode', function (req, res) {
+	var folder = req.param('input-folder', null);
+	console.log(folder);
+	fs.unlink(folder+'blah.txt');
 });
 
 server.listen(8080);

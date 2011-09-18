@@ -1,1 +1,10 @@
-h1 Hello World
+h1 Encoder +
+form(action='encode', method='post') Input Folder: 
+	input(type='text', name='input-folder')
+	br
+	br
+	input(id='but',type='submit', value='Encode')
+	br
+	br
+div(id='progress-bar',style='border:solid 1px;width:300px;height:30px')
+	div(id='progress', style='width:0px;height:30px;background-color:green')
