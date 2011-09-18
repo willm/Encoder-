@@ -2,23 +2,25 @@ require('./StringExtensions');
 var exec = require('child_process').exec,
 	step = require('step');
 
-function Encoder() {};
+function FlacEncoder(inputDirectiory) {
+	this.inDir = inputDirectiory;
+};
 
-Encoder.prototype.encode = function(filepath){
+FlacEncoder.prototype.encode = function(filepath){
 	var that = this;
 	if(filepath.endsWith('.flac')){
 		step(
-			function () {
-			  that.decodeFlac(filepath,this);
-			},
-			function () {
-			  that.convertToMp3('test.wav', 320,this);
-			  that.convertToMp3('test.wav', 128,this);
-			  that.convertToMp3('test.wav', 256,this);
-			},
-			function () {
-			  exec('rm test.wav', {cwd:'spec/res'}, this);
-			}
+				function () {
+				  that.decodeFlac(filepath,this);
+				},
+				function () {
+				  that.convertToMp3('test.wav', 320,this);
+				  that.convertToMp3('test.wav', 128,this);
+				  that.convertToMp3('test.wav', 256,this);
+				},
+				function () {
+				  exec('rm test.wav', {cwd:this.inDir}, this);
+				}
 			);
 		}
 	else{
@@ -29,12 +31,12 @@ Encoder.prototype.encode = function(filepath){
 	}
 };
 
-Encoder.prototype.decodeFlac = function(filepath, cb){
+FlacEncoder.prototype.decodeFlac = function(filename, cb){
 		var command = 'ffmpeg -y -i ' +
-						filepath + ' ' +
-						filepath.replaceExtension('.wav');
+						filename + ' ' +
+						filename.replaceExtension('.wav');
 						
-		exec(command,
+		exec(command, {cwd:this.inDir},
 			function (error, stout, sterr) {
 			  console.log('stout: ' + stout);
 			  console.log('sterr: ' + sterr);
@@ -48,11 +50,11 @@ Encoder.prototype.decodeFlac = function(filepath, cb){
 			});
 };
 
-Encoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
+FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 		var command = 'lame -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
 			inputFile.replaceExtension('_'+bitrate+'.mp3');
-		exec(command, {cwd:'spec/res'},
+		exec(command, {cwd:this.inDir},
 			function (error, stout, sterr) {
 			  console.log('stout: ' + stout);
 			  console.log('sterr: ' + sterr);
@@ -66,5 +68,5 @@ Encoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 			});
 };
 
-var e = new Encoder();
-e.encode('spec/res/test.flac');
+var e = new FlacEncoder('spec/res/');
+e.encode('test.flac');
