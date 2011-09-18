@@ -1,6 +1,7 @@
 require('./StringExtensions');
 var exec = require('child_process').exec,
-	step = require('step');
+	step = require('step'),
+	path = require('path');
 
 function FlacEncoder(inputDirectiory) {
 	this.inDir = inputDirectiory;
@@ -16,10 +17,15 @@ FlacEncoder.prototype.encode = function(filepath){
 				function () {
 				  that.convertToMp3('test.wav', 320,this);
 				  that.convertToMp3('test.wav', 128,this);
-				  that.convertToMp3('test.wav', 256,this);
+				  that.convertToMp3('test.wav', 64,this);
+				  that.convertToM4A('test.wav', 320,this);
 				},
 				function () {
-				  exec('rm test.wav', {cwd:this.inDir}, this);
+				  exec('rm test.wav', {cwd:that.inDir}, this);
+				  that.clipMp3('test_64.mp3',this);
+				},
+				function () {
+				  exec('rm test_64.mp3', {cwd:that.inDir}, this);
 				}
 			);
 		}
@@ -68,5 +74,45 @@ FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 			});
 };
 
-var e = new FlacEncoder('spec/res/');
+FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
+		var command = 'ffmpeg -ss 0 -t 30 -i ' + inputFile + ' -acodec copy ' + 
+			inputFile.replaceExtension('_mp3clip.mp3');
+		exec(command, {cwd:this.inDir},
+			function (error, stout, sterr) {
+			  console.log('stout: ' + stout);
+			  console.log('sterr: ' + sterr);
+			  if (error !== null) {
+			    throw{
+			    	name:'FFMpegError',
+			    	message:error
+			    };
+			  }
+			cb();
+			});
+};
+
+FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
+		var kbpsinbps =  0.0009765625,
+			bitrate = bitrate/kbpsinbps,
+			command = 'wine ../../lib/win32/neroAacEnc.exe -br ' + bitrate + ' ' +
+				'-if ' + inputFile + ' ' + 
+				'-of ' + inputFile.replaceExtension('.m4a');
+			
+		exec(command, {cwd:this.inDir},
+			function (error, stout, sterr) {
+			  console.log('stout: ' + stout);
+			  console.log('sterr: ' + sterr);
+			  if (error !== null) {
+			    throw{
+			    	name:'NeroError',
+			    	message:error
+			    };
+			  }
+			cb();
+			});
+};
+
+
+
+var e = new FlacEncoder(path.join(__dirname,'spec','res'));
 e.encode('test.flac');
