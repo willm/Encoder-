@@ -5,6 +5,7 @@ var exec = require('child_process').exec,
 
 function FlacEncoder(inputDirectiory) {
 	this.inDir = inputDirectiory;
+	this.outDir = 'out/';
 };
 
 FlacEncoder.prototype.encode = function(filepath){
@@ -21,11 +22,11 @@ FlacEncoder.prototype.encode = function(filepath){
 				  that.convertToM4A('test.wav', 320,this);
 				},
 				function () {
-				  exec('rm test.wav', {cwd:that.inDir}, this);
+				  exec('rm test.wav', {cwd:that.inDir});
 				  that.clipMp3('test_64.mp3',this);
 				},
 				function () {
-				  exec('rm test_64.mp3', {cwd:that.inDir}, this);
+				  exec('rm '+that.outDir +'test_64.mp3', {cwd:that.inDir}, this);
 				}
 			);
 		}
@@ -59,7 +60,7 @@ FlacEncoder.prototype.decodeFlac = function(filename, cb){
 FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 		var command = 'lame -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
-			inputFile.replaceExtension('_'+bitrate+'.mp3');
+			this.outDir + inputFile.replaceExtension('_'+bitrate+'.mp3');
 		exec(command, {cwd:this.inDir},
 			function (error, stout, sterr) {
 			  console.log('stout: ' + stout);
@@ -75,8 +76,8 @@ FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 };
 
 FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
-		var command = 'ffmpeg -ss 0 -t 30 -i ' + inputFile + ' -acodec copy ' + 
-			inputFile.replaceExtension('_mp3clip.mp3');
+		var command = 'ffmpeg -ss 0 -t 30 -i ' + this.outDir + inputFile + ' -acodec copy ' + 
+			this.outDir + inputFile.replaceExtension('_mp3clip.mp3');
 		exec(command, {cwd:this.inDir},
 			function (error, stout, sterr) {
 			  console.log('stout: ' + stout);
@@ -96,7 +97,7 @@ FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
 			bitrate = bitrate/kbpsinbps,
 			command = 'wine ../../lib/win32/neroAacEnc.exe -br ' + bitrate + ' ' +
 				'-if ' + inputFile + ' ' + 
-				'-of ' + inputFile.replaceExtension('.m4a');
+				'-of ' + this.outDir + inputFile.replaceExtension('.m4a');
 			
 		exec(command, {cwd:this.inDir},
 			function (error, stout, sterr) {
