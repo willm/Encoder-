@@ -1,11 +1,12 @@
 require('./StringExtensions');
 var exec = require('child_process').exec,
 	step = require('step'),
-	path = require('path');
+	path = require('path'),
+	fs = require('fs');
 
 function FlacEncoder(inputDirectiory) {
 	this.inDir = inputDirectiory;
-	this.outDir = 'out/';
+	this.outDir = path.join(inputDirectiory,'out');
 };
 
 FlacEncoder.prototype.encode = function(filepath){
@@ -23,12 +24,12 @@ FlacEncoder.prototype.encode = function(filepath){
 				},
 				function () {
 				//remove uneccessary wav file
-				  exec('rm test.wav', {cwd:that.inDir});
+				  fs.unlink(that.inDir +'/test.wav');
 				  that.clipMp3('test_64.mp3',this);
 				},
 				function () {
 				//remove full length 64kbps file
-				  exec('rm '+that.outDir +'test_64.mp3', {cwd:that.inDir}, this);
+				  fs.unlink(that.outDir +'/test_64.mp3', this);
 				}
 			);
 		}
@@ -66,13 +67,14 @@ FlacEncoder.prototype.decodeFlac = function(filename, cb){
 FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 		var command = 'lame -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
-			this.outDir + inputFile.replaceExtension('_'+bitrate+'.mp3');
+			path.join(this.outDir,inputFile.replaceExtension('_'+bitrate+'.mp3'));
 		this.executeCommand(command, 'Mp3EncodeError', cb);
 };
 
 FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
-		var command = 'ffmpeg -ss 0 -t 30 -i ' + this.outDir + inputFile + ' -acodec copy ' + 
-			this.outDir + inputFile.replaceExtension('_mp3clip.mp3');
+		var command = 'ffmpeg -ss 0 -t 30 -i ' + path.join(this.outDir,inputFile) + ' -acodec copy ' + 
+			path.join(this.outDir,inputFile.replaceExtension('_mp3clip.mp3'));
+			console.log("COMMAND: " + command);
 		this.executeCommand(command, 'ClippingError', cb);
 };
 
@@ -81,7 +83,7 @@ FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
 			bitrate = bitrate/kbpsinbps,
 			command = 'wine ../../lib/win32/neroAacEnc.exe -br ' + bitrate + ' ' +
 				'-if ' + inputFile + ' ' + 
-				'-of ' + this.outDir + inputFile.replaceExtension('.m4a');
+				'-of ' + path.join(this.outDir,inputFile.replaceExtension('.m4a'));
 		this.executeCommand(command, 'M4AEncodeError', cb);
 };
 
