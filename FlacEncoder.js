@@ -25,12 +25,12 @@ FlacEncoder.prototype.encode = function(filepath){
 				},
 				function () {
 				//remove uneccessary wav file
-				  fs.unlink(that.inDir +'/test.wav');
+				  fs.unlink(path.join(that.inDir,'test.wav'));
 				  that.clipMp3('test_64.mp3',this);
 				},
 				function () {
 				//remove full length 64kbps file
-				  fs.unlink(that.outDir +'/test_64.mp3', this);
+				  fs.unlink(path.join(that.outDir,'/test_64.mp3'), this);
 				}
 			);
 		}
