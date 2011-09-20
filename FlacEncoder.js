@@ -7,6 +7,9 @@ var exec = require('child_process').exec,
 exports.FlacEncoder = function (inputDirectiory) {
 	this.inDir = inputDirectiory;
 	this.outDir = path.join(inputDirectiory,'out');
+	this.ffmpeg = path.join(__dirname,'lib','ffmpeg-0.5', 'ffmpeg.exe');
+	this.lame = path.join(__dirname,'lib','lame3.98.4', 'lame.exe');
+	this.nero = path.join(__dirname,'lib','nero1.5.1', 'win32', 'neroAacEnc.exe');
 };
 
 exports.FlacEncoder.prototype.encode = function(filepath){
@@ -60,6 +63,7 @@ exports.FlacEncoder.prototype.executeCommand = function (command, err,cb) {
 			})
 };
 
+
 exports.FlacEncoder.prototype.decodeFlac = function(filename, cb){
 		var command = 'ffmpeg -y -i ' +
 						filename + ' ' +
@@ -68,9 +72,10 @@ exports.FlacEncoder.prototype.decodeFlac = function(filename, cb){
 		this.executeCommand(command, 'FlacDecodeError', cb);
 };
 
+
 exports.FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 		var currentfilename = path.basename(inputFile);
-		var command = 'lame -b ' + bitrate + ' ' 
+		var command = this.lame +' -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
 			path.join(this.outDir,currentfilename.replaceExtension('_'+bitrate+'.mp3'));
 		this.executeCommand(command, 'Mp3EncodeError', cb);
