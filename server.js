@@ -3,6 +3,9 @@ var express = require('express'),
 	nowjs = require('now'),
 	browserify = require('browserify'),
 	fs = require('fs'),
+	FileHasher = require('./FileHasher'),
+	flacEncoder = require('./FlacEncoder'),
+	EncodeRequest = require('./EncodeRequest'),
 	server;
 
 server = express.createServer();
@@ -25,11 +28,13 @@ server.get('/', function showHomePage(req, res) {
 });
 
 server.post('/encode', function (req, res) {
-	var folder = req.param('input-folder', null);
-	console.log(folder);
-	fs.unlink(folder+'blah.txt');
+	EncodeRequest.respond(req);
+	res.redirect('back');
 });
 
 server.listen(8080);
+
+var everyone = nowjs.initialize(server);
+
 
 console.log('Running on 8080');
