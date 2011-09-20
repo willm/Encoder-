@@ -4,13 +4,14 @@ var exec = require('child_process').exec,
 	path = require('path'),
 	fs = require('fs');
 
-function FlacEncoder(inputDirectiory) {
+exports.FlacEncoder = function (inputDirectiory) {
 	this.inDir = inputDirectiory;
 	this.outDir = path.join(inputDirectiory,'out');
 };
 
-FlacEncoder.prototype.encode = function(filepath){
-	var that = this;
+exports.FlacEncoder.prototype.encode = function(filepath){
+	var that = this,
+		filename = path.basename(filepath);
 	fs.mkdir(that.outDir,0777);
 	if(filepath.endsWith('.flac')){
 		step(
@@ -18,35 +19,37 @@ FlacEncoder.prototype.encode = function(filepath){
 				  that.decodeFlac(filepath,this);
 				},
 				function () {
-				  that.convertToMp3('test.wav', 320,this);
-				  that.convertToMp3('test.wav', 128,this);
-				  that.convertToMp3('test.wav', 64,this);
-				  that.convertToM4A('test.wav', 320,this);
+				  that.convertToMp3(filepath.replaceExtension('.wav'), 320,this);
+				  that.convertToMp3(filepath.replaceExtension('.wav'), 128,this);
+				  that.convertToMp3(filepath.replaceExtension('.wav'), 64,this);
+				  that.convertToM4A(filepath.replaceExtension('.wav'), 320,this);
 				},
 				function () {
 				//remove uneccessary wav file
-				  fs.unlink(path.join(that.inDir,'test.wav'));
-				  that.clipMp3('test_64.mp3',this);
+				  fs.unlink(filepath.replaceExtension('.wav'));
+				  that.clipMp3(path.join(this.outDir,filename.replaceExtension('_64.mp3')),this);
 				},
 				function () {
 				//remove full length 64kbps file
-				  fs.unlink(path.join(that.outDir,'/test_64.mp3'), this);
+				console.log('PROBLEM DIR: ' + path.join(that.outDir,filename.replaceExtension('_64.mp3')));
+				
+				  fs.unlink(path.join(that.outDir,filename.replaceExtension('_64.mp3')));
 				}
 			);
 		}
 	else{
-		throw{
+		/*throw{
 				name:'InvalidFileError',
 				message:'Please encode a flac file'
-			};
+			};*/
 	}
 };
 
-FlacEncoder.prototype.executeCommand = function (command, err,cb) {
+exports.FlacEncoder.prototype.executeCommand = function (command, err,cb) {
   exec(command, {cwd:this.inDir},function (error, stout, sterr) {
   			  console.log(command);
-			  console.log('stout: ' + stout);
-			  console.log('sterr: ' + sterr);
+			  //console.log('stout: ' + stout);
+			  //console.log('sterr: ' + sterr);
 			  if(error !== null){
 				  throw{
 				  	name:err,
@@ -57,7 +60,7 @@ FlacEncoder.prototype.executeCommand = function (command, err,cb) {
 			})
 };
 
-FlacEncoder.prototype.decodeFlac = function(filename, cb){
+exports.FlacEncoder.prototype.decodeFlac = function(filename, cb){
 		var command = 'ffmpeg -y -i ' +
 						filename + ' ' +
 						filename.replaceExtension('.wav');
@@ -65,28 +68,30 @@ FlacEncoder.prototype.decodeFlac = function(filename, cb){
 		this.executeCommand(command, 'FlacDecodeError', cb);
 };
 
-FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
+exports.FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
+		var currentfilename = path.basename(inputFile);
 		var command = 'lame -b ' + bitrate + ' ' 
 			+ inputFile + ' ' + 
-			path.join(this.outDir,inputFile.replaceExtension('_'+bitrate+'.mp3'));
+			path.join(this.outDir,currentfilename.replaceExtension('_'+bitrate+'.mp3'));
 		this.executeCommand(command, 'Mp3EncodeError', cb);
 };
 
-FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
-		var command = 'ffmpeg -ss 0 -t 30 -i ' + path.join(this.outDir,inputFile) + ' -acodec copy ' + 
-			path.join(this.outDir,inputFile.replaceExtension('_mp3clip.mp3'));
+exports.FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
+		var currentfilename = path.basename(inputFile);
+		var command = 'ffmpeg -ss 0 -t 30 -i ' + path.join(this.outDir,currentfilename) + ' -acodec copy ' + 
+			path.join(this.outDir,currentfilename.replaceExtension('_mp3clip.mp3'));
 			console.log("COMMAND: " + command);
 		this.executeCommand(command, 'ClippingError', cb);
 };
 
-FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
+exports.FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
+		var currentfilename = path.basename(inputFile);
 		var kbpsinbps =  0.0009765625,
 			bitrate = bitrate/kbpsinbps,
-			command = 'wine ../../lib/win32/neroAacEnc.exe -br ' + bitrate + ' ' +
+			command = 'wine '+ path.join(__dirname,'lib','win32','neroAacEnc.exe') + ' -br ' + bitrate + ' ' +
 				'-if ' + inputFile + ' ' + 
-				'-of ' + path.join(this.outDir,inputFile.replaceExtension('.m4a'));
+				'-of ' + path.join(this.outDir,currentfilename.replaceExtension('.m4a'));
 		this.executeCommand(command, 'M4AEncodeError', cb);
 };
 
-var e = new FlacEncoder(path.join(__dirname,'spec','res'));
-e.encode('test.flac');
+
