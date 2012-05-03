@@ -7,9 +7,10 @@ var exec = require('child_process').exec,
 exports.FlacEncoder = function (inputDirectiory) {
 	this.inDir = inputDirectiory;
 	this.outDir = path.join(inputDirectiory,'out');
-	this.ffmpeg = path.join(__dirname,'lib','ffmpeg-0.5', 'ffmpeg.exe');
-	this.lame = path.join(__dirname,'lib','lame3.98.4', 'lame.exe');
-	this.nero = path.join(__dirname,'lib','nero1.5.1', 'win32', 'neroAacEnc.exe');
+	this.ffmpeg = path.join(__dirname,'lib','./ffmpeg');
+	this.flac = path.join(__dirname,'lib','./flac');
+	this.lame = path.join(__dirname,'lib', './lame');
+	this.nero = path.join(__dirname,'lib','nero1.5.1', 'linux', 'neroAacEnc');
 };
 
 exports.FlacEncoder.prototype.encode = function(filepath){
@@ -52,7 +53,6 @@ exports.FlacEncoder.prototype.executeCommand = function (command, err,cb) {
   exec(command, {cwd:this.inDir},function (error, stout, sterr) {
   			  console.log(command);
 			  //console.log('stout: ' + stout);
-			  //console.log('sterr: ' + sterr);
 			  if(error !== null){
 				  throw{
 				  	name:err,
@@ -65,9 +65,8 @@ exports.FlacEncoder.prototype.executeCommand = function (command, err,cb) {
 
 
 exports.FlacEncoder.prototype.decodeFlac = function(filename, cb){
-		var command = 'ffmpeg -y -i ' +
-						filename + ' ' +
-						filename.replaceExtension('.wav');
+		var command = this.flac +' -d ' +
+						filename;
 		console.log(command + ' : ' + this.inDir);
 		this.executeCommand(command, 'FlacDecodeError', cb);
 };
@@ -83,7 +82,7 @@ exports.FlacEncoder.prototype.convertToMp3 = function(inputFile, bitrate, cb){
 
 exports.FlacEncoder.prototype.clipMp3 = function(inputFile, cb){
 		var currentfilename = path.basename(inputFile);
-		var command = 'ffmpeg -ss 0 -t 30 -i ' + path.join(this.outDir,currentfilename) + ' -acodec copy ' + 
+		var command = this.ffmpeg +' -ss 0 -t 30 -i ' + path.join(this.outDir,currentfilename) + ' -acodec copy ' + 
 			path.join(this.outDir,currentfilename.replaceExtension('_mp3clip.mp3'));
 			console.log("COMMAND: " + command);
 		this.executeCommand(command, 'ClippingError', cb);
@@ -93,7 +92,7 @@ exports.FlacEncoder.prototype.convertToM4A = function(inputFile, bitrate, cb){
 		var currentfilename = path.basename(inputFile);
 		var kbpsinbps =  0.0009765625,
 			bitrate = bitrate/kbpsinbps,
-			command = 'wine '+ path.join(__dirname,'lib','win32','neroAacEnc.exe') + ' -br ' + bitrate + ' ' +
+			command = path.join(__dirname,'lib','linux','./neroAacEnc') + ' -br ' + bitrate + ' ' +
 				'-if ' + inputFile + ' ' + 
 				'-of ' + path.join(this.outDir,currentfilename.replaceExtension('.m4a'));
 		this.executeCommand(command, 'M4AEncodeError', cb);
