@@ -1,6 +1,5 @@
 var flacEncoder = require('./FlacEncoder'),
 	fs = require('fs'),
-	nowjs = require('now'),
 	path = require('path');
 
 exports.respond = function (req){
