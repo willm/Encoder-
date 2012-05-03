@@ -1,7 +1,5 @@
 var express = require('express'),
 	path = require('path'),
-	nowjs = require('now'),
-	browserify = require('browserify'),
 	fs = require('fs'),
 	FileHasher = require('./FileHasher'),
 	flacEncoder = require('./FlacEncoder'),
@@ -17,9 +15,6 @@ server.configure(function configureAppAndMiddleware() {
 	server.use(express.bodyParser());
 	server.use(express.cookieParser());
 	server.use(express.static(path.join(__dirname, 'public')));
-	server.use(browserify({
-		require: path.join(__dirname, 'client/index')
-	}));
 });
 
 
@@ -33,8 +28,5 @@ server.post('/encode', function (req, res) {
 });
 
 server.listen(8080);
-
-var everyone = nowjs.initialize(server);
-
 
 console.log('Running on 8080');
